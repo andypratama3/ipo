@@ -1,0 +1,2096 @@
+{
+  "info": {
+    "name": "iPo Mie Pangsit — Backend API",
+    "description": "Koleksi uji lengkap backend iPo Mie Pangsit (Express + PostgreSQL/Neon, siap Vercel).\n\nCara pakai:\n1. Siapkan DB & .env lalu `npm run migrate && npm run seed && npm run dev`.\n2. Buka Collection Runner → Run (urutan 01 → 08 sudah benar).\n3. Headless: `npx newman run postman/iPo-Backend.postman_collection.json`.\n\nCatatan:\n- `runStamp`/`today` dibuat ulang di 1.1 & 5.1 → id transaksi & event webhook selalu baru tiap run (repeatable).\n- 2.8/2.9 mengganti sandi Pemilik lalu mengembalikannya — token Owner diperbarui otomatis.\n- Login punya rate limit (20/IP + 8/(IP+user) per 15 menit): jangan run beruntun >6× dalam 15 menit.\n- 7.10/7.11 lolos tanpa kredensial GoBiz (503/400); dengan kredensial penuh hasilnya 200.\n- Data uji menumpuk di tabel sync/audit — pakai DB uji, bukan produksi.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "ownerUsername",
+      "value": "pemilik",
+      "type": "string"
+    },
+    {
+      "key": "ownerPassword",
+      "value": "Pemilik-Kuat-2026",
+      "type": "string"
+    },
+    {
+      "key": "cashierUsername",
+      "value": "kasir",
+      "type": "string"
+    },
+    {
+      "key": "cashierPassword",
+      "value": "Kasir-Kuat-2026",
+      "type": "string"
+    },
+    {
+      "key": "kasir2Username",
+      "value": "kasir2",
+      "type": "string"
+    },
+    {
+      "key": "kasir2Password",
+      "value": "Kasir2-Kuat-2026",
+      "type": "string"
+    },
+    {
+      "key": "kasir2PasswordBaru",
+      "value": "Kasir2-Baru-2026",
+      "type": "string"
+    },
+    {
+      "key": "gofoodNotificationSecret",
+      "value": "whsec-local-dev-1234567890",
+      "type": "string"
+    },
+    {
+      "key": "gofoodOutletId",
+      "value": "G123456789",
+      "type": "string"
+    },
+    {
+      "key": "cronSecret",
+      "value": "ganti-CRON_SECRET-lokal-anda",
+      "type": "string"
+    },
+    {
+      "key": "today",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "runStamp",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tokenOwner",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tokenCashier",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "idOwner",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "idCashier",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "idKasir2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "orderId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "orderClientTxnId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cursorSince",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cursorSinceId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "webhookBody",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "webhookSig",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "webhookEventId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "postmanOrderNo",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "onlineOrderId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 · Health",
+      "item": [
+        {
+          "name": "1.1 Health proses & DB",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/health"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Stempel unik tiap run: id transaksi & event webhook selalu baru.",
+                  "if (!pm.collectionVariables.get('runStamp') || pm.info.requestName === '1.1 Health proses & DB') {",
+                  "  pm.collectionVariables.set('runStamp', String(Date.now() % 10000000).padStart(7, '0'));",
+                  "  pm.collectionVariables.set('today', new Date().toISOString().slice(0, 10).replace(/-/g, ''));",
+                  "}",
+                  "if (!pm.collectionVariables.get('baseUrl')) pm.collectionVariables.set('baseUrl', 'http://localhost:8080');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 & proses hidup', () => { pm.expect(pm.response.code).to.eql(200); pm.expect(pm.response.json().ok).to.be.true; });",
+                  "pm.test('db = up / unconfigured / down (tanpa detail konfigurasi)', () => {",
+                  "  pm.expect(Object.keys(pm.response.json()).sort()).to.eql(['db', 'ok', 'time']);",
+                  "  pm.expect(pm.response.json().db).to.be.oneOf(['up', 'unconfigured', 'down']);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.2 Root info API",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 & ok', () => { pm.expect(pm.response.code).to.eql(200); pm.expect(pm.response.json().ok).to.be.true; });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 · Auth",
+      "item": [
+        {
+          "name": "2.1 Login Pemilik",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"{{ownerUsername}}\",\"password\":\"{{ownerPassword}}\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": []
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 + token terbit + role Pemilik', () => {",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "  pm.expect(pm.response.json().token).to.be.a('string');",
+                  "  pm.expect(pm.response.json().user.role).to.eql('Pemilik');",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('tokenOwner', pm.response.json().token);",
+                  "  pm.collectionVariables.set('idOwner', String(pm.response.json().user.id));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.2 Login Kasir",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"{{cashierUsername}}\",\"password\":\"{{cashierPassword}}\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": []
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 + role Kasir', () => { pm.expect(pm.response.code).to.eql(200); pm.expect(pm.response.json().user.role).to.eql('Kasir'); });",
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('tokenCashier', pm.response.json().token);",
+                  "  pm.collectionVariables.set('idCashier', String(pm.response.json().user.id));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.3 Login sandi salah → 401",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"{{ownerUsername}}\",\"password\":\"jelas-salah-999\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": []
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 (pesan sama untuk user ada/tidak)', () => { pm.expect(pm.response.code).to.eql(401); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.4 Login body kosong → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 validation_error', () => { pm.expect(pm.response.code).to.eql(400); pm.expect(pm.response.json().error).to.eql('validation_error'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.5 Me (Pemilik)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 + username benar', () => { pm.expect(pm.response.code).to.eql(200); pm.expect(pm.response.json().user.username).to.eql(pm.collectionVariables.get('ownerUsername')); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.6 Me tanpa token → 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/auth/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401', () => { pm.expect(pm.response.code).to.eql(401); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.7 Token rusak → 401",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer aaaa.bbbb.cccc",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401', () => { pm.expect(pm.response.code).to.eql(401); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.8 Ganti sandi (mencabut token lama)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/change-password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"currentPassword\":\"{{ownerPassword}}\",\"newPassword\":\"Pemilik-Sementara-2026\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 + token baru terbit', () => { pm.expect(pm.response.code).to.eql(200); pm.expect(pm.response.json().token).to.be.a('string'); });",
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('tokenOwner', pm.response.json().token); // token lama otomatis mati",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.9 Kembalikan sandi semula",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/change-password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"currentPassword\":\"Pemilik-Sementara-2026\",\"newPassword\":\"{{ownerPassword}}\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 + token baru (token sebelum ganti-sandi mati)', () => { pm.expect(pm.response.code).to.eql(200); pm.expect(pm.response.json().token).to.be.a('string'); });",
+                  "if (pm.response.code === 200) pm.collectionVariables.set('tokenOwner', pm.response.json().token);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 · Pengguna (Pemilik)",
+      "item": [
+        {
+          "name": "3.1 Daftar pengguna",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 + array + tanpa password_hash', () => {",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "  pm.expect(pm.response.json().users).to.be.an('array');",
+                  "  pm.expect(JSON.stringify(pm.response.json())).to.not.include('password_hash');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.2 Buat akun kasir2 → 201 (atau 409 bila sudah ada)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"{{kasir2Username}}\",\"displayName\":\"Kasir Dua\",\"role\":\"Kasir\",\"password\":\"{{kasir2Password}}\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 dibuat / 409 sudah ada (repeatable)', () => { pm.expect([201, 409]).to.include(pm.response.code); });",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('idKasir2', String(pm.response.json().user.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.2b Ambil id kasir2 (untuk run berikutnya)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('kasir2 ditemukan + id tersimpan', () => {",
+                  "  const u = pm.response.json().users.find((x) => x.username === pm.collectionVariables.get('kasir2Username'));",
+                  "  pm.expect(u, 'kasir2 ada di daftar').to.not.be.undefined;",
+                  "  pm.collectionVariables.set('idKasir2', String(u.id));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.3 Username duplikat → 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"{{kasir2Username}}\",\"displayName\":\"x\",\"role\":\"Kasir\",\"password\":\"{{kasir2Password}}\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 username_taken', () => { pm.expect(pm.response.code).to.eql(409); pm.expect(pm.response.json().error).to.eql('username_taken'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.4 Sandi lemah → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"kasirlemah\",\"displayName\":\"Lemah\",\"role\":\"Kasir\",\"password\":\"1234\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 (sandi <8 / mudah ditebak ditolak)', () => { pm.expect(pm.response.code).to.eql(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.5 Nonaktifkan pemilik terakhir → 409",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users/{{idOwner}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"active\":false}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 last_owner', () => { pm.expect(pm.response.code).to.eql(409); pm.expect(pm.response.json().error).to.eql('last_owner'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.6 Ubah nama kasir2 → 200",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users/{{idKasir2}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"displayName\":\"Kasir Dua\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => { pm.expect(pm.response.code).to.eql(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.7 Kasir lihat daftar pengguna → 403",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCashier}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403', () => { pm.expect(pm.response.code).to.eql(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.8 Reset sandi kasir2 → 200",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users/{{idKasir2}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"password\":\"{{kasir2PasswordBaru}}\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => { pm.expect(pm.response.code).to.eql(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 · Sinkronisasi",
+      "item": [
+        {
+          "name": "4.1 Daftar tabel klien",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCashier}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/sync/tables"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 + 6 tabel', () => { pm.expect(pm.response.code).to.eql(200); pm.expect(pm.response.json().tables).to.have.lengthOf(6); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.2 Push produk (Pemilik) → accepted 2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/sync/push",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"table\":\"products\",\"rows\":[{\"id\":\"pangsit-original\",\"payload\":{\"name\":\"Pangsit Original\",\"category\":\"Mie Pangsit\",\"price\":18000,\"stock\":10}},{\"id\":\"es-teh\",\"payload\":{\"name\":\"Es Teh\",\"price\":5000,\"stock\":null}}],\"deviceId\":\"postman\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 + accepted = 2', () => { pm.expect(pm.response.code).to.eql(200); pm.expect(pm.response.json().accepted).to.eql(2); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.3 Push produk oleh Kasir → 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCashier}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/sync/push",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"table\":\"products\",\"rows\":[{\"id\":\"pangsit-original\",\"payload\":{\"name\":\"Pangsit Original\",\"category\":\"Mie Pangsit\",\"price\":18000,\"stock\":10}},{\"id\":\"es-teh\",\"payload\":{\"name\":\"Es Teh\",\"price\":5000,\"stock\":null}}],\"deviceId\":\"postman\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 (eskalasi peran ditolak)', () => { pm.expect(pm.response.code).to.eql(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.4 Push tabel \"orders\" → unknown_table",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/sync/push",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"table\":\"orders\",\"rows\":[{\"id\":\"x\",\"payload\":{}}]}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('error unknown_table', () => { pm.expect(pm.response.json().error).to.eql('unknown_table'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.5 Push tabel \"__proto__\" → ditolak",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/sync/push",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"table\":\"__proto__\",\"rows\":[{\"id\":\"x\",\"payload\":{}}]}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('error unknown_table (daftar putih tabel)', () => { pm.expect(pm.response.json().error).to.eql('unknown_table'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.6 Push settings taxRate 11",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/sync/push",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"table\":\"settings\",\"rows\":[{\"id\":\"main\",\"payload\":{\"businessName\":\"Mie Pangsit\",\"taxRate\":11}}]}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => { pm.expect(pm.response.code).to.eql(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.7 Pull produk + simpan kursor",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCashier}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/sync/pull?table=products"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 + ≥2 baris + kursor tersimpan', () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "  pm.expect(j.rows.length).to.be.at.least(2);",
+                  "  pm.expect(j.cursor).to.not.be.null;",
+                  "  pm.collectionVariables.set('cursorSince', j.cursor.since);",
+                  "  pm.collectionVariables.set('cursorSinceId', String(j.cursor.sinceId));",
+                  "});",
+                  "pm.test('baris = {id, deleted, updatedAt, payload}', () => { pm.expect(Object.keys(pm.response.json().rows[0]).sort()).to.eql(['deleted', 'id', 'payload', 'updatedAt']); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.8 Pull lanjutan dengan kursor → 0 baris",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCashier}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/sync/pull?table=products&since={{cursorSince}}&sinceId={{cursorSinceId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('kursor menghentikan pengulangan data', () => { pm.expect(pm.response.json().rows.length).to.eql(0); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.9 Kursor rusak → 400",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCashier}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/sync/pull?table=products&since=bukan-tanggal"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 bad_cursor', () => { pm.expect(pm.response.code).to.eql(400); pm.expect(pm.response.json().error).to.eql('bad_cursor'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 · Transaksi",
+      "item": [
+        {
+          "name": "5.1 Buat transaksi (harga dihitung ulang server)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCashier}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"order\":{\"id\":\"{{orderId}}\",\"clientTxnId\":\"{{orderClientTxnId}}\",\"createdAt\":\"{{$isoTimestamp}}\",\"orderType\":\"dine-in\",\"tableNumber\":\"3\",\"items\":[{\"productId\":\"pangsit-original\",\"name\":\"HARGA PALSU\",\"price\":1,\"qty\":2},{\"productId\":\"es-teh\",\"name\":\"Es Teh\",\"price\":99999,\"qty\":1}],\"discount\":1000,\"payment\":\"cash\",\"paidAmount\":50000},\"deviceId\":\"postman\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Stempel selalu baru: transaksi run ini tidak pernah tabrakan dengan run sebelumnya.",
+                  "pm.collectionVariables.set('runStamp', String(Date.now() % 10000000).padStart(7, '0'));",
+                  "pm.collectionVariables.set('today', new Date().toISOString().slice(0, 10).replace(/-/g, ''));",
+                  "pm.collectionVariables.set('orderId', 'MPJ-' + pm.collectionVariables.get('today') + '-' + pm.collectionVariables.get('runStamp'));",
+                  "const uuid = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => { const r = (Math.random() * 16) | 0; const v = c === 'x' ? r : (r & 0x3) | 0x8; return v.toString(16); });",
+                  "pm.collectionVariables.set('orderClientTxnId', uuid());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 dibuat', () => { pm.expect(pm.response.code).to.eql(201); });",
+                  "pm.test('subtotal 41000 dari harga server (1 & 99999 dari klien diabaikan)', () => { pm.expect(pm.response.json().order.subtotal).to.eql(41000); });",
+                  "pm.test('total 40000 (diskon 1000)', () => { pm.expect(pm.response.json().order.total).to.eql(40000); });",
+                  "pm.test('nama item = nama produk resmi', () => { pm.expect(pm.response.json().order.items[0].name).to.eql('Pangsit Original'); });",
+                  "pm.test('kembalian 10000', () => { pm.expect(pm.response.json().order.changeAmount).to.eql(10000); });",
+                  "pm.test('taxRate 11 dari settings', () => { pm.expect(pm.response.json().order.taxRate).to.eql(11); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.2 Ulangi transaksi sama → duplicate",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCashier}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"order\":{\"id\":\"{{orderId}}\",\"clientTxnId\":\"{{orderClientTxnId}}\",\"createdAt\":\"{{$isoTimestamp}}\",\"items\":[{\"productId\":\"pangsit-original\",\"name\":\"Pangsit Original\",\"price\":18000,\"qty\":2}],\"discount\":1000,\"payment\":\"cash\",\"paidAmount\":50000}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 + duplicate = true (tanpa dobel)', () => { pm.expect(pm.response.code).to.eql(200); pm.expect(pm.response.json().duplicate).to.be.true; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.3 Nomor struk tidak valid → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCashier}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"order\":{\"id\":\"x\",\"clientTxnId\":\"abc\",\"createdAt\":\"2026-01-01T00:00:00Z\",\"items\":[{\"name\":\"x\",\"price\":1,\"qty\":1}]}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400', () => { pm.expect(pm.response.code).to.eql(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.4 Stok turun 10 − 2 = 8 (qty 2; es-teh tanpa batas)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCashier}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/sync/pull?table=products"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rows = pm.response.json().rows;",
+                  "pm.test('stok pangsit = 8', () => { pm.expect(rows.find((r) => r.id === 'pangsit-original').payload.stock).to.eql(8); });",
+                  "pm.test('es-teh tetap null', () => { pm.expect(rows.find((r) => r.id === 'es-teh').payload.stock).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.5 Kasir hapus transaksi → 403",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCashier}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/orders/{{orderId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403', () => { pm.expect(pm.response.code).to.eql(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.6 Pemilik hapus transaksi (soft delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/orders/{{orderId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 + stockRestored false (stok sengaja tak dikembalikan)', () => { pm.expect(pm.response.code).to.eql(200); pm.expect(pm.response.json().stockRestored).to.be.false; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.7 Hapus ulang → 404",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/orders/{{orderId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404', () => { pm.expect(pm.response.code).to.eql(404); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.8 Pull transaksi: tombstone terlihat",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/sync/pull?table=orders"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const id = pm.collectionVariables.get('orderId');",
+                  "const row = pm.response.json().rows.find((r) => r.id === id);",
+                  "pm.test('baris ada & deleted = true', () => { pm.expect(row, 'baris ' + id).to.not.be.undefined; pm.expect(row.deleted).to.be.true; });",
+                  "pm.test('payload tombstone = {id}', () => { pm.expect(row.payload).to.eql({ id }); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 · Webhook GoFood",
+      "item": [
+        {
+          "name": "6.1 Tanda tangan salah → 401",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Go-Signature",
+                "value": "deadbeef",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/webhooks/gofood",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 invalid_signature + body penyerang tak disimpan', () => { pm.expect(pm.response.code).to.eql(401); pm.expect(pm.response.json().error).to.eql('invalid_signature'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6.2 Sumber tak didukung (grab) → 404",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/webhooks/grab",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 (tanpa autentikasi = ditolak)', () => { pm.expect(pm.response.code).to.eql(404); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6.3 Pesanan baru (HMAC valid) → accepted",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Go-Signature",
+                "value": "{{webhookSig}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/webhooks/gofood",
+            "body": {
+              "mode": "raw",
+              "raw": "{{webhookBody}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(() => {",
+                  "  const CryptoJS = require('crypto-js');",
+                  "  const secret = pm.collectionVariables.get('gofoodNotificationSecret') || '';",
+                  "  const stamp = pm.collectionVariables.get('runStamp') || String(Date.now() % 10000000).padStart(7, '0');",
+                  "  pm.collectionVariables.set('runStamp', stamp);",
+                  "  const orderNo = 'F-POSTMAN-' + stamp;",
+                  "  const key = 'evt-a-' + stamp;",
+                  "  const raw = JSON.stringify({\n  header: { event_name: 'gofood.order.awaiting_merchant_acceptance', event_id: key, version: 1, timestamp: new Date().toISOString() },\n  body: {\n    customer: { id: 'c1', name: 'Dina' }, driver: { name: '' }, service_type: 'gofood',\n    outlet: { id: pm.collectionVariables.get(\"gofoodOutletId\"), external_outlet_id: 'o1' },\n    order: { status: 'AWAITING_MERCHANT_ACCEPTANCE', pin: '1234', order_number: orderNo, order_total: 18000,\n      order_items: [{ quantity: 2, price: 18000, notes: 'pedas', name: 'Pangsit Original', id: 'u1', external_id: 'pangsit-original', variants: [] }],\n      created_at: new Date().toISOString() },\n  },\n});",
+                  "  pm.collectionVariables.set('webhookBody', raw);",
+                  "  pm.collectionVariables.set('webhookSig', CryptoJS.HmacSHA256(raw, secret).toString(CryptoJS.enc.Hex));",
+                  "  pm.collectionVariables.set('webhookEventId', key);",
+                  "  pm.collectionVariables.set('postmanOrderNo', orderNo);",
+                  "  pm.collectionVariables.set('onlineOrderId', 'ONL-GF-' + orderNo);",
+                  "  void pm.collectionVariables.get(\"gofoodOutletId\");",
+                  "})();"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 + status accepted', () => { pm.expect(pm.response.code).to.eql(200); pm.expect(pm.response.json().status).to.eql('accepted'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6.4 Kirim ulang event sama → duplicate",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Go-Signature",
+                "value": "{{webhookSig}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/webhooks/gofood",
+            "body": {
+              "mode": "raw",
+              "raw": "{{webhookBody}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 + duplicate (idempotensi by event_id)', () => { pm.expect(pm.response.json().status).to.eql('duplicate'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6.5 Event outlet lain → ignored",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Go-Signature",
+                "value": "{{webhookSig}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/webhooks/gofood",
+            "body": {
+              "mode": "raw",
+              "raw": "{{webhookBody}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(() => {",
+                  "  const CryptoJS = require('crypto-js');",
+                  "  const secret = pm.collectionVariables.get('gofoodNotificationSecret') || '';",
+                  "  const stamp = pm.collectionVariables.get('runStamp') || String(Date.now() % 10000000).padStart(7, '0');",
+                  "  pm.collectionVariables.set('runStamp', stamp);",
+                  "  const orderNo = 'F-POSTMAN-' + stamp;",
+                  "  const key = 'evt-b-' + stamp;",
+                  "  const raw = JSON.stringify({\n  header: { event_name: 'gofood.order.awaiting_merchant_acceptance', event_id: key, version: 1, timestamp: new Date().toISOString() },\n  body: {\n    customer: { id: 'c1', name: 'Dina' }, driver: { name: '' }, service_type: 'gofood',\n    outlet: { id: \"OUTLET-LAIN\", external_outlet_id: 'o1' },\n    order: { status: 'AWAITING_MERCHANT_ACCEPTANCE', pin: '1234', order_number: orderNo, order_total: 18000,\n      order_items: [{ quantity: 2, price: 18000, notes: 'pedas', name: 'Pangsit Original', id: 'u1', external_id: 'pangsit-original', variants: [] }],\n      created_at: new Date().toISOString() },\n  },\n});",
+                  "  pm.collectionVariables.set('webhookBody', raw);",
+                  "  pm.collectionVariables.set('webhookSig', CryptoJS.HmacSHA256(raw, secret).toString(CryptoJS.enc.Hex));",
+                  "  pm.collectionVariables.set('webhookEventId', key);",
+                  "  pm.collectionVariables.set('postmanOrderNo', orderNo);",
+                  "  pm.collectionVariables.set('onlineOrderId', 'ONL-GF-' + orderNo);",
+                  "  void \"OUTLET-LAIN\";",
+                  "})();"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 + ignored (outlet tak cocok)', () => { pm.expect(pm.response.json().status).to.eql('ignored'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6.6 JSON rusak (tanda tangan benar) → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Go-Signature",
+                "value": "{{webhookSig}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/webhooks/gofood",
+            "body": {
+              "mode": "raw",
+              "raw": "{{webhookBody}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(() => {",
+                  "  const CryptoJS = require('crypto-js');",
+                  "  const secret = pm.collectionVariables.get('gofoodNotificationSecret') || '';",
+                  "  const stamp = pm.collectionVariables.get('runStamp') || String(Date.now() % 10000000).padStart(7, '0');",
+                  "  pm.collectionVariables.set('runStamp', stamp);",
+                  "  const orderNo = 'F-POSTMAN-' + stamp;",
+                  "  const key = 'evt-c-' + stamp;",
+                  "  const raw = '{rusak';",
+                  "  pm.collectionVariables.set('webhookBody', raw);",
+                  "  pm.collectionVariables.set('webhookSig', CryptoJS.HmacSHA256(raw, secret).toString(CryptoJS.enc.Hex));",
+                  "  pm.collectionVariables.set('webhookEventId', key);",
+                  "  pm.collectionVariables.set('postmanOrderNo', orderNo);",
+                  "  pm.collectionVariables.set('onlineOrderId', 'ONL-GF-' + orderNo);",
+                  "  void \"X\";",
+                  "})();"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 invalid_json', () => { pm.expect(pm.response.code).to.eql(400); pm.expect(pm.response.json().error).to.eql('invalid_json'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 · Pesanan Online",
+      "item": [
+        {
+          "name": "7.1 Konfigurasi integrasi (tanpa rahasia)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/online/config"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => { pm.expect(pm.response.code).to.eql(200); });",
+                  "pm.test('tanpa clientSecret / notificationSecret', () => {",
+                  "  const s = JSON.stringify(pm.response.json());",
+                  "  pm.expect(s).to.not.include('clientSecret');",
+                  "  pm.expect(s).to.not.include(pm.collectionVariables.get('gofoodNotificationSecret'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7.2 Kasir lihat konfigurasi → 403",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCashier}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/online/config"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403', () => { pm.expect(pm.response.code).to.eql(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7.3 Daftar pesanan online (ada hasil webhook)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCashier}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/online/orders"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 + berisi pesanan dari 6.3', () => {",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "  const id = pm.collectionVariables.get('onlineOrderId');",
+                  "  pm.expect(pm.response.json().orders.map((o) => o.id)).to.include(id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7.4 Ubah status online → antre aksi accept",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCashier}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/sync/push",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"table\":\"online_orders\",\"rows\":[{\"id\":\"{{onlineOrderId}}\",\"payload\":{\"id\":\"{{onlineOrderId}}\",\"source\":\"gofood\",\"partnerOrderId\":\"{{postmanOrderNo}}\",\"orderType\":\"delivery\",\"status\":\"dibuat\",\"customer\":\"Dina\",\"note\":\"\",\"items\":[]}}],\"deviceId\":\"postman\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 diterima', () => { pm.expect(pm.response.code).to.eql(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7.5 Peta menu (daftar)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/online/menu-map"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 + items array', () => { pm.expect(pm.response.code).to.eql(200); pm.expect(pm.response.json().items).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7.6 Set peta menu manual → 200",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/online/menu-map",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"source\":\"gofood\",\"partnerMenuId\":\"pangsit-original\",\"partnerMenuName\":\"Pangsit Original\",\"productId\":\"pangsit-original\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 + auto_matched false', () => { pm.expect(pm.response.code).to.eql(200); pm.expect(pm.response.json().item.auto_matched).to.be.false; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7.7 Peta menu ke produk tak ada → 400",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/online/menu-map",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"source\":\"gofood\",\"partnerMenuId\":\"z-77\",\"productId\":\"tidak-ada-999\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 product_not_found', () => { pm.expect(pm.response.code).to.eql(400); pm.expect(pm.response.json().error).to.eql('product_not_found'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7.8 Antrean aksi mitra",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/online/actions"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 + actions array', () => { pm.expect(pm.response.code).to.eql(200); pm.expect(pm.response.json().actions).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7.9 Proses antrean aksi (Pemilik)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/online/actions/process"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 + results array', () => { pm.expect(pm.response.code).to.eql(200); pm.expect(pm.response.json().results).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7.10 Cek langganan GoFood (butuh kredensial)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/online/gofood/cek"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 bila kredensial ada / 503 bila belum — bukan 500', () => { pm.expect([200, 503]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7.11 Langganan webhook GoFood",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/online/gofood/langganan"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 sukses / 400 URL belum HTTPS / 503 kredensial belum ada', () => { pm.expect([200, 400, 503]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7.12 Riwayat webhook (raw disembunyikan)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenOwner}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/online/webhooks"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 + events array + field raw tak pernah dikembalikan', () => {",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "  const ev = pm.response.json().events;",
+                  "  pm.expect(ev).to.be.an('array');",
+                  "  ev.forEach((e) => pm.expect(e.raw).to.be.undefined);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "08 · Cron & Keamanan HTTP",
+      "item": [
+        {
+          "name": "8.1 Cron tanpa secret → 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/cron/maintenance"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401', () => { pm.expect(pm.response.code).to.eql(401); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8.2 Cron dengan CRON_SECRET → 200",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cronSecret}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/cron/maintenance"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 + ok (kirim ulang antrean + bersih data lama)', () => { pm.expect(pm.response.code).to.eql(200); pm.expect(pm.response.json().ok).to.be.true; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8.3 Header keamanan",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('tanpa x-powered-by', () => { pm.expect(pm.response.headers.get('x-powered-by')).to.be.undefined; });",
+                  "pm.test('Cache-Control no-store', () => { pm.expect(pm.response.headers.get('cache-control')).to.include('no-store'); });",
+                  "pm.test('HSTS aktif', () => { pm.expect(pm.response.headers.get('strict-transport-security')).to.not.be.undefined; });",
+                  "pm.test('X-Content-Type-Options nosniff', () => { pm.expect(pm.response.headers.get('x-content-type-options')).to.eql('nosniff'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8.4 Endpoint tak ada → 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/tidak-ada"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404', () => { pm.expect(pm.response.code).to.eql(404); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8.5 CORS origin asing ditolak",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "https://jahat.example",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('tanpa Access-Control-Allow-Origin', () => { pm.expect(pm.response.headers.get('access-control-allow-origin')).to.be.undefined; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8.6 CORS origin diizinkan",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "https://localhost",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Access-Control-Allow-Origin = https://localhost', () => { pm.expect(pm.response.headers.get('access-control-allow-origin')).to.eql('https://localhost'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

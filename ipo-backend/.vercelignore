@@ -1,0 +1,4 @@
+tests
+scripts/mock-gofood-order.js
+.env
+.env.*
