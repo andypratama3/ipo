@@ -1,5 +1,7 @@
 // Simulasi webhook GoFood ke server Anda (untuk sandbox/lokal).
-// Pakai: GOFOOD_NOTIFICATION_SECRET=xxx node scripts/mock-gofood-order.js http://localhost:8080 [event] [orderNo]
+// Pakai: npm run mock:gofood [url] [event] [orderNo]
+// Ambil GOFOOD_NOTIFICATION_SECRET & GOFOOD_OUTLET_ID dari .env (boleh juga dari environment).
+import 'dotenv/config';
 import crypto from 'node:crypto';
 
 const base = (process.argv[2] || 'http://localhost:8080').replace(/\/+$/, '');

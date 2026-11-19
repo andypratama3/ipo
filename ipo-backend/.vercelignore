@@ -1,4 +1,4 @@
 tests
-scripts/mock-gofood-order.js
+postman
 .env
 .env.*
