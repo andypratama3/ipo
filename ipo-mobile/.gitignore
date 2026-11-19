@@ -1,0 +1,39 @@
+# Dependensi & tools
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Kredensial & rahasia — JANGAN pernah di-commit
+.env
+.env.*
+*.pem
+*.key
+android/keystore/*.keystore
+android/keystore/*.jks
+android/keystore/signing.properties
+android/keystore/CATATAN-PENTING.txt
+android/keystore/*.txt
+!android/keystore/signing.properties.example
+
+# Konfigurasi lokal mesin
+android/local.properties
+android/.idea/
+*.iml
+
+# Hasil build Capacitor / Gradle
+*.apk
+*.aab
+*.apk.idsig
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/capacitor.plugins.json
+android/app/src/main/res/xml/config.xml
+
+# Log & cadangan editor
+*.log
+.DS_Store
+Thumbs.db
