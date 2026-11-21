@@ -1,0 +1,269 @@
+{
+  "info": {
+    "name": "GoFood (GoBiz) — iPo Mie Pangsit",
+    "description": "Koleksi uji API GoBiz untuk integrasi GoFood.\n\nCara pakai:\n1. Import file ini + GoFood.postman_environment.json ke Postman.\n2. Pilih environment \"GoFood Sandbox\".\n3. Isi clientId, clientSecret, outletId dari GoBiz Developer Portal.\n4. Jalankan request \"1. Ambil Token\" — token tersimpan otomatis ke variabel {{token}}.\n5. Baru jalankan request lain (Bearer {{token}} dipakai otomatis).\n\nDokumen resmi: https://developer.gobiz.com/docs/api/intro",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{token}}", "type": "string" }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Ambil Token (OAuth2)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "grant_type", "value": "client_credentials", "type": "text" },
+            { "key": "scope", "value": "{{scope}}", "type": "text" }
+          ]
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            { "key": "username", "value": "{{clientId}}", "type": "string" },
+            { "key": "password", "value": "{{clientSecret}}", "type": "string" }
+          ]
+        },
+        "url": {
+          "raw": "{{authUrl}}",
+          "host": ["{{authUrl}}"]
+        },
+        "description": "Basic Auth memakai clientId:clientSecret. WAJIB kirim scope — tanpa scope, token diterbitkan tanpa hak akses apa pun (dokumen GoBiz Direct Integration)."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const res = pm.response.json();",
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('ada access_token', () => pm.expect(res.access_token).to.be.a('string'));",
+              "if (res.access_token) {",
+              "  pm.environment.set('token', res.access_token);",
+              "  console.log('Token tersimpan. Berlaku ' + (res.expires_in || '?') + ' detik.');",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Outlet & Token",
+      "item": [
+        {
+          "name": "Daftar Outlet Tertaut",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiBase}}/integrations/partner/v1/linked-outlets",
+              "host": ["{{apiBase}}"],
+              "path": ["integrations", "partner", "v1", "linked-outlets"]
+            },
+            "description": "Menampilkan outlet GoBiz yang tertaut ke integrasi Anda. Ambil id outlet (mis. G123456789) untuk GOFOOD_OUTLET_ID."
+          }
+        },
+        {
+          "name": "Info Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiBase}}/integrations/partner/v1/token-info",
+              "host": ["{{apiBase}}"],
+              "path": ["integrations", "partner", "v1", "token-info"]
+            },
+            "description": "Memastikan token yang dipakai memang punya hak akses yang benar."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Langganan Notifikasi",
+      "item": [
+        {
+          "name": "Daftar Langganan",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiBase}}/integrations/partner/v1/notification-subscriptions",
+              "host": ["{{apiBase}}"],
+              "path": ["integrations", "partner", "v1", "notification-subscriptions"]
+            }
+          }
+        },
+        {
+          "name": "Buat Langganan",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"gofood.order.created\",\n  \"url\": \"{{webhookUrl}}\",\n  \"active\": true\n}"
+            },
+            "url": {
+              "raw": "{{apiBase}}/integrations/partner/v1/notification-subscriptions",
+              "host": ["{{apiBase}}"],
+              "path": ["integrations", "partner", "v1", "notification-subscriptions"]
+            },
+            "description": "Ulangi untuk setiap event: gofood.order.created, awaiting_merchant_acceptance, merchant_accepted, prep_order_now, driver_otw_pickup, driver_arrived, placed, completed, cancelled. Atau pakai tombol di aplikasi: POST /api/online/gofood/langganan."
+          }
+        },
+        {
+          "name": "Hapus Langganan",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{apiBase}}/integrations/partner/v1/notification-subscriptions/{{subscriptionId}}",
+              "host": ["{{apiBase}}"],
+              "path": ["integrations", "partner", "v1", "notification-subscriptions", "{{subscriptionId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Aksi Pesanan",
+      "item": [
+        {
+          "name": "Terima Pesanan",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{apiBase}}/integrations/gofood/outlets/{{outletId}}/v1/orders/{{orderType}}/{{orderNumber}}/accepted",
+              "host": ["{{apiBase}}"],
+              "path": ["integrations", "gofood", "outlets", "{{outletId}}", "v1", "orders", "{{orderType}}", "{{orderNumber}}", "accepted"]
+            },
+            "description": "Tanpa body. orderType: delivery | pickup. orderNumber contoh: F-704173354."
+          }
+        },
+        {
+          "name": "Tolak Pesanan",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cancel_reason_code\": \"ITEMS_OUT_OF_STOCK\",\n  \"cancel_reason_description\": \"Bahan habis\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBase}}/integrations/gofood/outlets/{{outletId}}/v1/orders/{{orderType}}/{{orderNumber}}/cancelled",
+              "host": ["{{apiBase}}"],
+              "path": ["integrations", "gofood", "outlets", "{{outletId}}", "v1", "orders", "{{orderType}}", "{{orderNumber}}", "cancelled"]
+            },
+            "description": "cancel_reason_code: HIGH_DEMAND | RESTAURANT_CLOSED | ITEMS_OUT_OF_STOCK | OTHERS. Deskripsi wajib, minimal 3 karakter."
+          }
+        },
+        {
+          "name": "Tandai Siap",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"country_code\": \"ID\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBase}}/integrations/gofood/outlets/{{outletId}}/v1/orders/{{orderType}}/{{orderNumber}}/food-prepared",
+              "host": ["{{apiBase}}"],
+              "path": ["integrations", "gofood", "outlets", "{{outletId}}", "v1", "orders", "{{orderType}}", "{{orderNumber}}", "food-prepared"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Katalog",
+      "item": [
+        {
+          "name": "Ambil Katalog",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiBase}}/integrations/gofood/outlets/{{outletId}}/v2/catalog",
+              "host": ["{{apiBase}}"],
+              "path": ["integrations", "gofood", "outlets", "{{outletId}}", "v2", "catalog"]
+            }
+          }
+        },
+        {
+          "name": "Push Katalog (penuh)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"request_id\": \"{{$guid}}\",\n  \"categories\": [],\n  \"menu_items\": [],\n  \"variant_categories\": []\n}"
+            },
+            "url": {
+              "raw": "{{apiBase}}/integrations/gofood/outlets/{{outletId}}/v1/catalog",
+              "host": ["{{apiBase}}"],
+              "path": ["integrations", "gofood", "outlets", "{{outletId}}", "v1", "catalog"]
+            },
+            "description": "PERHATIAN: push katalog bersifat PENUH — dokumen GoBiz tidak mendukung update parsial. Jangan jalankan contoh kosong ini di outlet produksi."
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Uji Webhook ke Server iPo",
+      "item": [
+        {
+          "name": "Kirim Pesanan Uji (bertanda tangan)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"header\": {\n    \"event_name\": \"gofood.order.created\",\n    \"event_id\": \"uji-postman-001\",\n    \"version\": 1,\n    \"timestamp\": \"2026-10-25T10:00:00+07:00\"\n  },\n  \"body\": {\n    \"customer\": { \"id\": \"X\", \"name\": \"Pelanggan Uji\" },\n    \"driver\": { \"name\": \"Budi\" },\n    \"service_type\": \"gofood\",\n    \"outlet\": { \"id\": \"{{outletId}}\", \"external_outlet_id\": \"outlet01\" },\n    \"order\": {\n      \"status\": \"CREATED\",\n      \"pin\": \"1234\",\n      \"order_number\": \"F-UJI-0001\",\n      \"order_total\": 26000,\n      \"cutlery_requested\": true,\n      \"created_at\": \"2026-10-25T10:00:00+07:00\",\n      \"order_items\": [\n        { \"quantity\": 1, \"price\": 20000, \"notes\": \"Pedas\", \"name\": \"Mie Pangsit Original\", \"id\": \"itm-1\", \"external_id\": \"pangsit-original\", \"variants\": [] },\n        { \"quantity\": 1, \"price\": 6000, \"notes\": \"\", \"name\": \"Teh Es/Panas\", \"id\": \"itm-2\", \"external_id\": \"teh-es-panas\", \"variants\": [] }\n      ]\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{localApi}}/api/webhooks/gofood",
+              "host": ["{{localApi}}"],
+              "path": ["api", "webhooks", "gofood"]
+            },
+            "description": "Menguji server sendiri: header X-Go-Signature dihitung otomatis oleh pre-request script dari body mentah + notificationSecret."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const secret = pm.environment.get('notificationSecret');",
+                  "if (!secret) { console.warn('notificationSecret kosong — server akan menolak 401/503.'); }",
+                  "const body = pm.request.body ? pm.request.body.raw : '';",
+                  "const sig = CryptoJS.HmacSHA256(body, secret || '').toString(CryptoJS.enc.Hex);",
+                  "pm.request.headers.upsert({ key: 'X-Go-Signature', value: sig });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,0 @@
-# Salin file ini menjadi signing.properties di folder yang sama, lalu isi
-# dengan kata sandi keystore asli. File signing.properties ADALAH rahasia dan
-# sudah dikecualikan lewat .gitignore — jangan pernah di-commit.
-storePassword=GANTI_SANDI_KEYSTORE
-keyAlias=ipomiepangsit
-keyPassword=GANTI_SANDI_KEY

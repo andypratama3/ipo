@@ -1,0 +1,53 @@
+name: ipomiepangsit_pos
+description: "POS Mie Pangsit Jakarta — Flutter (local-first)."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.14.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  material_ui: ^1.11.1
+  cupertino_ui: ^1.1.7
+  cupertino_icons: ^1.0.8
+  provider: ^6.1.5+1
+  sqflite: ^2.4.6
+  path: ^1.9.1
+  path_provider: ^2.1.6
+  http: ^1.6.0
+  intl: ^0.20.3
+  uuid: ^4.6.0
+  collection: ^1.19.1
+  shared_preferences: ^2.5.6
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^7.5.0
+  image_picker: ^1.2.4
+  excel: ^4.0.6
+  share_plus: ^13.3.1
+  file_picker: ^13.4.0
+  pdf: ^3.12.0
+  printing: ^5.14.3
+  esc_pos_utils_plus: ^2.0.4
+  permission_handler: ^13.0.2
+  connectivity_plus: ^7.3.2
+  flutter_bluetooth_serial: ^0.4.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/img/pangsitmie.png
+
+# Plugin asli memakai jcenter()/AGP 4.1.0 yang tidak kompatibel dengan
+# Gradle 9 pada Flutter 3.50. Salinan vendored sudah disesuaikan.
+dependency_overrides:
+  flutter_bluetooth_serial:
+    path: third_party/flutter_bluetooth_serial

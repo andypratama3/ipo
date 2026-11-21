@@ -1,0 +1,664 @@
+{
+  "exportedAt": "2026-10-13T23:24:44.918Z",
+  "source": "https://nktpdurnmdrktgsaslpy.supabase.co",
+  "tables": {
+    "products": [
+      {
+        "id": "menu-1791530364173-c6m9c",
+        "payload": {
+          "id": "menu-1791530364173-c6m9c"
+        },
+        "updated_at": "2026-10-09T07:20:33.464028+00:00",
+        "deleted": true,
+        "device_id": "dev-pbxjh5u2ts"
+      },
+      {
+        "id": "pangsit-pentol",
+        "payload": {
+          "id": "pangsit-pentol",
+          "name": "Mie Pangsit Pentol",
+          "emoji": "🥟",
+          "price": 25000,
+          "stock": null,
+          "category": "mie-pangsit-jakarta",
+          "available": true,
+          "description": "Pangsit dalam isi pentol, level 1 sampai 3."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "pangsit-ceker",
+        "payload": {
+          "id": "pangsit-ceker",
+          "name": "Mie Pangsit Ceker",
+          "emoji": "🍗",
+          "price": 25000,
+          "stock": null,
+          "category": "mie-pangsit-jakarta",
+          "available": true,
+          "description": "Pangsit dalam isi ceker yang gurih."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "pangsit-telur",
+        "payload": {
+          "id": "pangsit-telur",
+          "name": "Mie Pangsit Telur Puyuh",
+          "emoji": "🥚",
+          "price": 25000,
+          "stock": null,
+          "category": "mie-pangsit-jakarta",
+          "available": true,
+          "description": "Pangsit dalam isi telur puyuh."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "paket-komplit",
+        "payload": {
+          "id": "paket-komplit",
+          "name": "Mie Pangsit Komplit",
+          "emoji": "🎯",
+          "price": 30000,
+          "stock": null,
+          "category": "mie-pangsit-jakarta",
+          "available": true,
+          "description": "Isi lengkap: Pentol, Telur Puyuh, dan Ceker."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "mie-kering",
+        "payload": {
+          "id": "mie-kering",
+          "name": "Mie Kering (Level 1, 2, 3)",
+          "emoji": "🥢",
+          "price": 20000,
+          "stock": null,
+          "category": "mie-kering",
+          "available": true,
+          "description": "Mie kering dengan level kepedasan 1, 2, atau 3."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "santuy",
+        "payload": {
+          "id": "santuy",
+          "name": "Mie Santuy",
+          "emoji": "🍜",
+          "price": 15000,
+          "stock": null,
+          "category": "mie-kering",
+          "available": true,
+          "description": "Mie rebus santuy khas warung."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "guobiyos",
+        "payload": {
+          "id": "guobiyos",
+          "name": "Mie Guobiyos",
+          "emoji": "🍲",
+          "price": 15000,
+          "stock": null,
+          "category": "mie-kering",
+          "available": true,
+          "description": "Mie rebus dengan bumbu dan sambal khas."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "wonton-siomay-goreng",
+        "payload": {
+          "id": "wonton-siomay-goreng",
+          "name": "Wonton Siomay Goreng",
+          "emoji": "🥠",
+          "price": 15000,
+          "stock": null,
+          "category": "special-menu",
+          "available": true,
+          "description": "Wonton dan siomay digoreng sampai garing."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "wonton-siomay",
+        "payload": {
+          "id": "wonton-siomay",
+          "name": "Wonton Siomay",
+          "emoji": "🥟",
+          "price": 15000,
+          "stock": null,
+          "category": "special-menu",
+          "available": true,
+          "description": "Wonton dan siomay rebus dengan saus."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "bakso",
+        "payload": {
+          "id": "bakso",
+          "name": "Bakso",
+          "emoji": "🍲",
+          "price": 20000,
+          "stock": null,
+          "category": "special-menu",
+          "available": true,
+          "description": "Bakso dalam mangkuk dengan kuah kaldu."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "mie-gurih",
+        "payload": {
+          "id": "mie-gurih",
+          "name": "Mie Gurih",
+          "emoji": "🍜",
+          "price": 20000,
+          "stock": null,
+          "category": "special-menu",
+          "available": true,
+          "description": "Mie rebus gurih dengan topping."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "telur-puyuh-topping",
+        "payload": {
+          "id": "telur-puyuh-topping",
+          "name": "Telur Puyuh",
+          "emoji": "🥚",
+          "price": 6000,
+          "stock": null,
+          "category": "topping",
+          "available": true,
+          "description": "Telur puyuh rebus."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "menu-1791530522770-1qe0x",
+        "payload": {
+          "id": "menu-1791530522770-1qe0x",
+          "name": "Tes Hapus Menu",
+          "emoji": "🍜",
+          "price": 5000,
+          "stock": null,
+          "category": "mie-pangsit-jakarta",
+          "available": true,
+          "description": ""
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "siomay-rebus",
+        "payload": {
+          "id": "siomay-rebus",
+          "name": "Siomay Rebus",
+          "emoji": "🥟",
+          "price": 6000,
+          "stock": null,
+          "category": "topping",
+          "available": true,
+          "description": "Siomay rebus dengan saus."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "pentol",
+        "payload": {
+          "id": "pentol",
+          "name": "Pentol",
+          "emoji": "🍢",
+          "price": 6000,
+          "stock": null,
+          "category": "topping",
+          "available": true,
+          "description": "Pentol bakso rebus."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "ceker",
+        "payload": {
+          "id": "ceker",
+          "name": "Ceker",
+          "emoji": "🍗",
+          "price": 6000,
+          "stock": null,
+          "category": "topping",
+          "available": true,
+          "description": "Ceker ayam rebus."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "teh-tawar",
+        "payload": {
+          "id": "teh-tawar",
+          "name": "Teh Tawar",
+          "emoji": "🍵",
+          "price": 4000,
+          "stock": null,
+          "category": "minuman",
+          "available": true,
+          "description": "Teh tawar tanpa gula."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "teh-es-panas",
+        "payload": {
+          "id": "teh-es-panas",
+          "name": "Teh Es/Panas",
+          "emoji": "🧋",
+          "price": 6000,
+          "stock": null,
+          "category": "minuman",
+          "available": true,
+          "description": "Teh es dengan gula atau teh panas."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "air-mineral",
+        "payload": {
+          "id": "air-mineral",
+          "name": "Air Mineral",
+          "emoji": "💧",
+          "price": 6000,
+          "stock": null,
+          "category": "minuman",
+          "available": true,
+          "description": "Air mineral dingin."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "kopi-hitam",
+        "payload": {
+          "id": "kopi-hitam",
+          "name": "Kopi Hitam",
+          "emoji": "☕",
+          "price": 8000,
+          "stock": null,
+          "category": "minuman",
+          "available": true,
+          "description": "Kopi hitam tanpa gula."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "jeruk",
+        "payload": {
+          "id": "jeruk",
+          "name": "Jeruk Es/Panas",
+          "emoji": "🍊",
+          "price": 8000,
+          "stock": null,
+          "category": "minuman",
+          "available": true,
+          "description": "Jus jeruk es atau hangat."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "cappuccino",
+        "payload": {
+          "id": "cappuccino",
+          "name": "Cappuccino Es/Panas",
+          "emoji": "☕",
+          "price": 8000,
+          "stock": null,
+          "category": "minuman",
+          "available": true,
+          "description": "Cappuccino es atau hangat."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "coklat",
+        "payload": {
+          "id": "coklat",
+          "name": "Cokelat Es/Panas",
+          "emoji": "🍫",
+          "price": 10000,
+          "stock": null,
+          "category": "minuman",
+          "available": true,
+          "description": "Cokelat es atau hangat."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "lemon-tea",
+        "payload": {
+          "id": "lemon-tea",
+          "name": "Lemon Tea Es/Panas",
+          "emoji": "🍋",
+          "price": 12000,
+          "stock": null,
+          "category": "minuman",
+          "available": true,
+          "description": "Teh lemon es atau hangat."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "pangsit-original",
+        "payload": {
+          "id": "pangsit-original",
+          "name": "Mie Pangsit Original",
+          "emoji": "🍜",
+          "price": 20000,
+          "stock": null,
+          "category": "mie-pangsit-jakarta",
+          "available": true,
+          "description": "Pangsit dalam dibungkus mie dengan kuah bening gurih."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "es-kelapa",
+        "payload": {
+          "id": "es-kelapa",
+          "name": "Es Kelapa",
+          "emoji": "🥥",
+          "price": 15000,
+          "stock": null,
+          "category": "minuman",
+          "available": true,
+          "description": "Es kelapa muda segar."
+        },
+        "updated_at": "2026-10-13T22:24:52.722033+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      }
+    ],
+    "categories": [
+      {
+        "id": "mie-apayah",
+        "payload": {
+          "id": "mie-apayah"
+        },
+        "updated_at": "2026-10-09T16:09:30.405346+00:00",
+        "deleted": true,
+        "device_id": "dev-8eqzci67nv"
+      },
+      {
+        "id": "mie-pangsit-jakarta",
+        "payload": {
+          "id": "mie-pangsit-jakarta",
+          "emoji": "🍜",
+          "label": "Mie Pangsit Jakarta"
+        },
+        "updated_at": "2026-10-13T22:24:53.600498+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "mie-kering",
+        "payload": {
+          "id": "mie-kering",
+          "emoji": "🥢",
+          "label": "Mie Kering"
+        },
+        "updated_at": "2026-10-13T22:24:53.600498+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "special-menu",
+        "payload": {
+          "id": "special-menu",
+          "emoji": "🍢",
+          "label": "Special menu"
+        },
+        "updated_at": "2026-10-13T22:24:53.600498+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "topping",
+        "payload": {
+          "id": "topping",
+          "emoji": "🥟",
+          "label": "Topping"
+        },
+        "updated_at": "2026-10-13T22:24:53.600498+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      },
+      {
+        "id": "minuman",
+        "payload": {
+          "id": "minuman",
+          "emoji": "🥤",
+          "label": "Minuman"
+        },
+        "updated_at": "2026-10-13T22:24:53.600498+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      }
+    ],
+    "settings": [
+      {
+        "id": "main",
+        "payload": {
+          "lockPin": "f9c50f6b7b69cd96",
+          "taxRate": 11,
+          "lockEnabled": false,
+          "businessName": "Mie Pangsit Jakarta",
+          "printerModel": "x58bt",
+          "businessPhone": "082255190646",
+          "receiptFooter": "Terima kasih atas kunjungan anda\nSimpan struk ini sebagai bukti pembelian \nLayanan konsumen wa (082255190646)",
+          "printerAddress": "DC:0D:51:03:B9:98",
+          "businessAddress": "Jl. Siradj Salman, Air Putih, Kec. Samarinda Ulu, Kota Samarinda, Kalimantan Timur 75124, Indonesia",
+          "receiptPaperSize": "58mm",
+          "printerConfigured": false,
+          "printerDeviceName": "RPP02N",
+          "qrisStaticPayload": "00020101021126570011ID.DANA.WWW011893600915325010538702092501053870303UMI51440014ID.CO.QRIS.WWW0215ID10254460681380303UMI5204581353033605802ID5913KWU GAMMATIKA6014Kota Samarinda61057524363041607",
+          "supabaseConfigured": false
+        },
+        "updated_at": "2026-10-13T22:27:18.823995+00:00",
+        "deleted": false,
+        "device_id": "dev-dl9tjp3hxj"
+      }
+    ],
+    "orders": [
+      {
+        "id": "MPJ-20261013-90948",
+        "payload": {
+          "id": "MPJ-20261013-90948"
+        },
+        "updated_at": "2026-10-13T23:10:59.574905+00:00",
+        "deleted": true,
+        "device_id": "dev-6y7l60nj2a"
+      },
+      {
+        "id": "MPJ-20261014-88055",
+        "payload": {
+          "id": "MPJ-20261014-88055"
+        },
+        "updated_at": "2026-10-13T23:10:59.574905+00:00",
+        "deleted": true,
+        "device_id": "dev-6y7l60nj2a"
+      },
+      {
+        "id": "MPJ-20261013-16262",
+        "payload": {
+          "id": "MPJ-20261013-16262"
+        },
+        "updated_at": "2026-10-13T23:10:59.574905+00:00",
+        "deleted": true,
+        "device_id": "dev-6y7l60nj2a"
+      },
+      {
+        "id": "MPJ-20261013-78643",
+        "payload": {
+          "id": "MPJ-20261013-78643"
+        },
+        "updated_at": "2026-10-13T23:10:59.574905+00:00",
+        "deleted": true,
+        "device_id": "dev-6y7l60nj2a"
+      },
+      {
+        "id": "MPJ-20261013-73145",
+        "payload": {
+          "id": "MPJ-20261013-73145"
+        },
+        "updated_at": "2026-10-13T23:10:59.574905+00:00",
+        "deleted": true,
+        "device_id": "dev-6y7l60nj2a"
+      },
+      {
+        "id": "MPJ-20261013-06933",
+        "payload": {
+          "id": "MPJ-20261013-06933"
+        },
+        "updated_at": "2026-10-13T23:10:59.574905+00:00",
+        "deleted": true,
+        "device_id": "dev-6y7l60nj2a"
+      }
+    ],
+    "pending_orders": [
+      {
+        "id": "MPJ-20261013-73145",
+        "payload": {
+          "id": "MPJ-20261013-73145"
+        },
+        "updated_at": "2026-10-13T11:26:37.2712+00:00",
+        "deleted": true,
+        "device_id": "dev-0qz19og4ap"
+      },
+      {
+        "id": "MPJ-20261013-06933",
+        "payload": {
+          "id": "MPJ-20261013-06933"
+        },
+        "updated_at": "2026-10-13T11:27:01.225776+00:00",
+        "deleted": true,
+        "device_id": "dev-0qz19og4ap"
+      },
+      {
+        "id": "MPJ-20261013-78643",
+        "payload": {
+          "id": "MPJ-20261013-78643"
+        },
+        "updated_at": "2026-10-13T11:27:05.92156+00:00",
+        "deleted": true,
+        "device_id": "dev-0qz19og4ap"
+      },
+      {
+        "id": "MPJ-20261013-16262",
+        "payload": {
+          "id": "MPJ-20261013-16262"
+        },
+        "updated_at": "2026-10-13T11:27:05.92156+00:00",
+        "deleted": true,
+        "device_id": "dev-0qz19og4ap"
+      },
+      {
+        "id": "MPJ-20261013-90948",
+        "payload": {
+          "id": "MPJ-20261013-90948"
+        },
+        "updated_at": "2026-10-13T11:35:07.182266+00:00",
+        "deleted": true,
+        "device_id": "dev-n2hsj6slbd"
+      },
+      {
+        "id": "MPJ-20261014-88055",
+        "payload": {
+          "id": "MPJ-20261014-88055"
+        },
+        "updated_at": "2026-10-13T22:26:06.030289+00:00",
+        "deleted": true,
+        "device_id": "dev-dl9tjp3hxj"
+      }
+    ],
+    "online_orders": [
+      {
+        "id": "ONL-GF-2174",
+        "payload": {
+          "id": "ONL-GF-2174"
+        },
+        "updated_at": "2026-10-13T23:11:00.02238+00:00",
+        "deleted": true,
+        "device_id": "dev-6y7l60nj2a"
+      },
+      {
+        "id": "ONL-GR-9041",
+        "payload": {
+          "id": "ONL-GR-9041"
+        },
+        "updated_at": "2026-10-13T23:11:00.02238+00:00",
+        "deleted": true,
+        "device_id": "dev-6y7l60nj2a"
+      },
+      {
+        "id": "ONL-SP-5512",
+        "payload": {
+          "id": "ONL-SP-5512"
+        },
+        "updated_at": "2026-10-13T23:11:00.02238+00:00",
+        "deleted": true,
+        "device_id": "dev-6y7l60nj2a"
+      }
+    ]
+  }
+}
